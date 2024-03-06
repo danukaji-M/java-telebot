@@ -23,29 +23,6 @@ public class Bot extends TelegramLongPollingBot{
     private InlineKeyboardMarkup keyboardM2;
 
     //Inline keyBoard Setup
-    private void setupKeyBoard(){
-        var next = InlineKeyboardButton.builder()
-                .text("Next").callbackData("next")
-                .build();
-
-        var back = InlineKeyboardButton.builder()
-                .text("Back").callbackData("back")
-                .build();
-
-        var url = InlineKeyboardButton.builder()
-                .text("Tutorial")
-                .url("https://core.telegram.org/bots/api")
-                .build();
-
-        keyboardM1 = InlineKeyboardMarkup.builder()
-                .keyboardRow(List.of(next)).build();
-
-        //Buttons are wrapped in lists since each keyboard is a set of button rows
-        keyboardM2 = InlineKeyboardMarkup.builder()
-                .keyboardRow(List.of(back))
-                .keyboardRow(List.of(url))
-                .build();
-    }
     public void sendMenu(@NotNull Long who, String txt, InlineKeyboardMarkup kb){
         SendMessage sm = SendMessage.builder().chatId(who.toString())
                 .parseMode("HTML").text(txt)
@@ -72,6 +49,27 @@ public class Bot extends TelegramLongPollingBot{
         var msg = update.getMessage();
         var user = msg.getFrom();
         var id = user.getId();
+        var next = InlineKeyboardButton.builder()
+                .text("Next").callbackData("next")
+                .build();
+
+        var back = InlineKeyboardButton.builder()
+                .text("Back").callbackData("back")
+                .build();
+
+        var url = InlineKeyboardButton.builder()
+                .text("Tutorial")
+                .url("https://core.telegram.org/bots/api")
+                .build();
+
+        keyboardM1 = InlineKeyboardMarkup.builder()
+                .keyboardRow(List.of(next)).build();
+
+        //Buttons are wrapped in lists since each keyboard is a set of button rows
+        keyboardM2 = InlineKeyboardMarkup.builder()
+                .keyboardRow(List.of(back))
+                .keyboardRow(List.of(url))
+                .build();
         //sendText(id,"Hello World");
         var txt = msg.getText();
         if(msg.isCommand()){
