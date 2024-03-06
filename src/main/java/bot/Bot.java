@@ -1,8 +1,12 @@
 package bot;
+import org.jetbrains.annotations.NotNull;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
+import org.telegram.telegrambots.meta.api.methods.AnswerCallbackQuery;
 import org.telegram.telegrambots.meta.api.methods.CopyMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageReplyMarkup;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.EditMessageText;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
@@ -10,7 +14,6 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
-
 import java.util.List;
 
 //telegram bot name
@@ -43,7 +46,7 @@ public class Bot extends TelegramLongPollingBot{
                 .keyboardRow(List.of(url))
                 .build();
     }
-    public void sendMenu(Long who, String txt,InlineKeyboardButton kb){
+    public void sendMenu(@NotNull Long who, String txt, InlineKeyboardMarkup kb){
         SendMessage sm = SendMessage.builder().chatId(who.toString())
                 .parseMode("HTML").text(txt)
                 .replyMarkup((ReplyKeyboard) kb).build();
@@ -65,24 +68,22 @@ public class Bot extends TelegramLongPollingBot{
 
     //get msg details
     @Override
-    public void onUpdateReceived(Update update){
+    public void onUpdateReceived(@NotNull Update update){
         var msg = update.getMessage();
         var user = msg.getFrom();
         var id = user.getId();
         //sendText(id,"Hello World");
-        if(screaming) {
-            scream(id, update.getMessage());
-        }else{
-            copyMessage(id, msg.getMessageId());
-        }
+        var txt = msg.getText();
         if(msg.isCommand()){
-            if(msg.getText().equals("/scream")){
+            if (txt.equals("/scream")) {
                 screaming = true;
-            }else if(msg.getText().equals("/whisper")){
-                screaming = false;
+            }else if(txt.equals("/whishper")){
+                screaming= false;
+            }else if (txt.equals("/menu")){
+                sendMenu(id,"<b>Menu 1</b>", keyboardM1);
             }
-            return;
         }
+        return;
 
     }
 
@@ -92,10 +93,11 @@ public class Bot extends TelegramLongPollingBot{
         }else{
             copyMessage(id, msg.getMessageId()); //we cant really scream a sticker
         }
+
     }
 
     //get text msg type
-    public void sendText(Long who,String what){
+    public void sendText(@NotNull Long who, String what){
         SendMessage sm = SendMessage.builder()
                 .chatId(who.toString()) //who are we sending a message to
                 .text(what).build(); //message content
@@ -116,7 +118,7 @@ public class Bot extends TelegramLongPollingBot{
     }
 
     //copy message
-    public void copyMessage(Long who, Integer msgId){
+    public void copyMessage(@NotNull Long who, Integer msgId){
         CopyMessage cm = CopyMessage.builder()
                 .fromChatId(who.toString()) //We copy from the user
                 .chatId(who.toString())
@@ -129,4 +131,32 @@ public class Bot extends TelegramLongPollingBot{
         }
     }
 
+    private void buttonTap(@NotNull Long id, String queryId, @NotNull String data, int msgId) {
+
+        EditMessageText newTxt = EditMessageText.builder()
+                .chatId(id.toString())
+                .messageId(msgId).text("").build();
+
+        EditMessageReplyMarkup newKb = EditMessageReplyMarkup.builder()
+                .chatId(id.toString()).messageId(msgId).build();
+
+        if(data.equals("next")) {
+            newTxt.setText("MENU 2");
+            newKb.setReplyMarkup(keyboardM2);
+        } else if(data.equals("back")) {
+            newTxt.setText("MENU 1");
+            newKb.setReplyMarkup(keyboardM1);
+        }
+
+        AnswerCallbackQuery close = AnswerCallbackQuery.builder()
+                .callbackQueryId(queryId).build();
+
+        try{
+            execute(close);
+            execute(newTxt);
+            execute(newKb);
+        }catch (TelegramApiException e){
+            throw new RuntimeException(e);
+        }
+    }
 }
